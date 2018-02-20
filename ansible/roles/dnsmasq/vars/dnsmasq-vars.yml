@@ -1,0 +1,2 @@
+# Network Variables
+ipaddress: "{{ ansible_enp0s8.ipv4.address }}"

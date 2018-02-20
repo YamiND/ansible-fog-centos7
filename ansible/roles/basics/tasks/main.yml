@@ -1,0 +1,32 @@
+- set_fact: role_name=basics
+  become: yes
+  become_user: root
+##################################################
+### Basic system packages and firewall config
+- name: Start firewalld and enable at start
+  service: name=firewalld state=stopped enabled=no # TODO: FIX THIS LATER
+
+- name: Install epel from remote repo on CentOS 7
+  yum: name=https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm state=present
+  when: ansible_distribution_major_version == "7"
+
+- name: Install remi from remote repo on CentOS 7
+  yum: name=http://rpms.remirepo.net/enterprise/remi-release-7.rpm state=present
+  when: ansible_distribution_major_version == "7"
+
+- name: Update Yum
+  yum: 
+    name: '*' 
+    state: latest
+
+- name: Install basic packages
+  yum: 
+    name:
+      - yum-utils
+      - vim
+      - git
+      - vim
+      - man
+      - zip
+      - epel-release
+      - python-pip

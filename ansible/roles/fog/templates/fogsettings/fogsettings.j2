@@ -1,0 +1,43 @@
+## Start of FOG Settings
+## Created by the FOG Installer
+## Find more information about this file in the FOG Project wiki:
+##     https://wiki.fogproject.org/wiki/index.php?title=.fogsettings
+## Version: {{ item.version }}
+## Install time: {{ ansible_date_time.date }}
+ipaddress='{{ item.ipaddress }}'
+copybackold='0'
+interface='{{ item.interface }}'
+submask='{{ item.subnet }}'
+routeraddress='#   No router address added'
+plainrouter=''
+dnsaddress='#   No dns added'
+username='{{ item.username }}'
+password='{{ item.password }}'
+osid='1'
+osname='Redhat'
+dodhcp='N'
+bldhcp='0'
+dhcpd='dhcpd'
+blexports='1'
+installtype='N'
+snmysqluser='root'
+snmysqlpass=''
+snmysqlhost='localhost'
+installlang='0'
+storageLocation='/images'
+fogupdateloaded=1
+docroot='/var/www/html/'
+webroot='/fog/'
+caCreated='yes'
+startrange=''
+endrange=''
+bootfilename='undionly.kpxe'
+packages='bc curl gcc gcc-c++ gzip httpd lftp m4 make mariadb mariadb-server mod_ssl net-tools nfs-utils php php-bcmath php-cli php-common php-fpm php-gd php-ldap php-mbstring php-mcrypt php-mysqlnd php-process tar tftp-server unzip vsftpd wget xinetd '
+noTftpBuild=''
+notpxedefaultfile=''
+sslpath='/opt/fog/snapins/ssl/'
+backupPath='/home/'
+php_ver=''
+php_verAdds=''
+sslprivkey='/opt/fog/snapins/ssl//.srvprivate.key'
+## End of FOG Settings

@@ -1,0 +1,93 @@
+---
+initdsrc: "packages/systemd"
+initdpath: "/lib/systemd/system"
+
+initdMCfullname: "FOGMulticastManager.service"
+initdIRfullname: "FOGImageReplicator.service"
+initdSDfullname: "FOGScheduler.service"
+initdSRfullname: "FOGSnapinReplicator.service"
+initdSHfullname: "FOGSnapinHash.service"
+initdPHfullname: "FOGPingHosts.service"
+initdISfullname: "FOGImageSize.service"
+
+# Internationalization variable
+installlang: "0"
+
+# Network Variables
+ipaddress: "{{ ansible_enp0s8.ipv4.address }}"
+subnet: "{{ ansible_enp0s8.ipv4.netmask }}"
+interface: "{{ ansible_enp0s8.device }}"
+
+# OS Information
+osname: "{{ ansible_distribution }}"
+linuxReleaseName: "{{ ansible_distribution }}"
+osid: "1"
+
+# php vars
+phpini: "/etc/php.ini"
+
+# Image Storage Var
+storageLocation: "/images"
+storageLocationCapture: '{{ vars["storageLocation"] + "/dev" }}'
+
+# Bootfile name
+bootfilename: "undionly.kpxe"
+
+# MariaDB Data
+snmysqlhost: 'localhost'
+snmysqluser: 'root'
+snmysqlpass: '' # Blank
+
+# Web Directory Variables
+docroot: "/var/www/html/"
+webdirdest: '{{ vars["docroot"] + "fog/" }}'
+webdirsrc: "packages/web/"
+webroot: '/fog/' # This is a weird one, TODO: Learn more
+
+# TFTP/User Details
+username: 'fog' 
+#password: "{{ lookup('password', '/dev/null length=15 chars=ascii_letters') }}"
+#password: 'password'
+
+# Snapin Var
+snapindir: "/opt/fog/snapins"
+
+# FOG Client Variables
+clientVer: '0.11.12'
+clienturl: 'https://github.com/FOGProject/fog-client/releases/download/{{ clientVer }}/FOGService.msi'
+siurl: 'https://github.com/FOGProject/fog-client/releases/download/{{ clientVer }}/SmartInstaller.exe'
+
+# SSL Stuff (Snapins, Web, and Client)
+sslpath: '/opt/fog/snapins/ssl/'
+sslprivkey: '{{ sslpath }}/.srvprivate.key'
+
+# Apache Variables
+apacheuser: 'apache'
+etcconf: "/etc/httpd/conf.d/fog.conf"
+apachelogdir: "/var/log/httpd"
+apacheerrlog: '{{ apachelogdir }}/error_log'
+apacheacclog: '{{ apachelogdir }}/access_log'
+
+# TFTP Variables
+tftpdirdst: '/tftpboot'
+tftpdirsrc: 'packages/tftp'
+findoptions: "! -name default"
+tftpconfig: '/etc/xinetd.d/tftp'
+
+# FTP Variables
+ftpconfig: '/etc/vsftpd/vsftpd.conf'
+
+# FOG Service Variables
+servicedst: '/opt/fog/service'
+servicesrc: 'packages/service'
+servicelogs: '/opt/fog/log'
+
+# NFS Variables
+nfsconfig: '/etc/exports'
+
+# FOGSettings Variables 
+fogprogramdir: '/opt/fog'
+version: '1.4.4'
+
+# FOG Extraction Directory
+fogprojectdir: '/root/fogproject'

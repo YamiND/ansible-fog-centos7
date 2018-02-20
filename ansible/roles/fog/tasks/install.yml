@@ -1,0 +1,47 @@
+##################################################
+### Install necessary fog packages
+
+- name: Install FOG packages (Step 1)
+  yum: 
+    name:
+      - bc 
+      - curl 
+      - gcc 
+      - gcc-c++ 
+      - gzip 
+      - httpd 
+      - lftp 
+      - m4 
+      - make 
+      - mod_ssl 
+      - net-tools 
+      - nfs-utils 
+      - php 
+      - php-bcmath 
+      - php-cli 
+      - php-common 
+      - php-fpm 
+      - php-gd 
+      - php-ldap 
+      - php-mbstring 
+      - php-mcrypt 
+      - php-mysqlnd 
+      - php-process 
+      - tar 
+      - tftp-server 
+      - unzip 
+      - vsftpd 
+      - wget 
+      - xinetd
+    enablerepo: remi-php70 
+
+      # Install pyOpenSSL python package.
+- name: "Install pyOpenSSL with pip"
+  pip:
+    name: pyOpenSSL
+
+- name: Update Yum Again (FOG)
+  yum: 
+    name: '*' 
+    state: latest
+

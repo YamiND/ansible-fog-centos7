@@ -1,0 +1,8 @@
+- name: Copy dnsmasq config
+  template:
+    src=ltsp.conf.j2
+    dest=/etc/dnsmasq.d/ltsp.conf
+  with_items: 
+    - { ipaddress: '{{ ipaddress }}' }  
+  notify:
+    - restart dnsmasq

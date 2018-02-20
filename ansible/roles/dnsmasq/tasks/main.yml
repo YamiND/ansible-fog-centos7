@@ -1,0 +1,8 @@
+- set_fact: role_name=dnsmasq
+  become: yes
+  become_user: root
+##################################################
+### Install and configure dnsmasq
+
+- import_tasks: install.yml
+- import_tasks: configure.yml

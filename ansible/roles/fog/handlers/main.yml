@@ -1,0 +1,7 @@
+- name: restart httpd
+  service: name=httpd.service state=restarted
+  listen: "restart web services"
+
+- name: restart php-fpm
+  service: name=php-fpm.service state=restarted
+  listen: "restart web services"

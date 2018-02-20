@@ -1,0 +1,16 @@
+port=0
+
+log-dhcp
+
+tftp-root=/tftpboot
+
+dhcp-no-override
+
+dhcp-boot=undionly.kpxe,,{{ item.ipaddress }}
+
+pxe-prompt="Booting FOG Menu", 1
+
+# Legacy BIOS Support
+pxe-service=X86PC, "Boot (LEACY) BIOS PXE", undionly.kpxe
+
+dhcp-range={{ item.ipaddress }},proxy
