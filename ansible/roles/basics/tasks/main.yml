@@ -4,7 +4,7 @@
 ##################################################
 ### Basic system packages and firewall config
 - name: Start firewalld and enable at start
-  service: name=firewalld state=stopped enabled=no # TODO: FIX THIS LATER
+  service: name=firewalld state=started enabled=yes
 
 - name: Install epel from remote repo on CentOS 7
   yum: name=https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm state=present

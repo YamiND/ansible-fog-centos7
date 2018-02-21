@@ -46,8 +46,6 @@ webroot: '/fog/' # This is a weird one, TODO: Learn more
 
 # TFTP/User Details
 username: 'fog' 
-#password: "{{ lookup('password', '/dev/null length=15 chars=ascii_letters') }}"
-#password: 'password'
 
 # Snapin Var
 snapindir: "/opt/fog/snapins"
@@ -90,4 +88,8 @@ fogprogramdir: '/opt/fog'
 version: '1.4.4'
 
 # FOG Extraction Directory
-fogprojectdir: '/root/fogproject'
+fogprojectdir: '/root/fog_1.4.4'
+
+# UDP Variables
+udpcastsrc: '{{ fogprojectdir }}/packages/udpcast-20120424.tar.gz'
+udpcasttmp: '/tmp/udpcast-20120424'

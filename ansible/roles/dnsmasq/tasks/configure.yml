@@ -1,3 +1,9 @@
+- name: "Enable dnsmasq over firewalld"
+  firewalld: 
+    service: dns
+    permanent: true
+    state: enabled
+
 - name: Copy dnsmasq config
   template:
     src=ltsp.conf.j2

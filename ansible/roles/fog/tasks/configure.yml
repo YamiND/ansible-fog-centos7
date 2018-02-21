@@ -1,20 +1,78 @@
 - name: "Include FOG Variables"
   include_vars: "fog-RedHat-vars.yml"
 
-- name: "Download FOG 1.4.4 from Github to /root/fogproject"
+# BEGIN configure firewalld for necessary FOG services
+
+- firewalld:
+    service: https
+    permanent: true
+    state: enabled
+
+- firewalld:
+    service: http
+    permanent: true
+    state: enabled
+
+- firewalld:
+    service: tftp
+    permanent: true
+    state: enabled
+
+- firewalld:
+    service: ftp
+    permanent: true
+    state: enabled
+
+- firewalld:
+    service: mysql
+    permanent: true
+    state: enabled
+
+- firewalld:
+    service: nfs
+    permanent: true
+    state: enabled
+
+- firewalld:
+    service: mountd
+    permanent: true
+    state: enabled
+
+- firewalld:
+    service: rpc-bind
+    permanent: true
+    state: enabled
+
+- firewalld:
+    service: proxy-dhcp
+    permanent: true
+    state: enabled
+
+- firewalld:
+    service: samba
+    permanent: true
+    state: enabled
+
+- name: "Reload Firewalld to take in new changes"
+  systemd:
+    name: firewalld
+    state: reloaded
+# END configure firewalld for necessary FOG services
+
+
+# Checker to see if a the fog project directory exists
+
+- name: "Download FOG 1.4.4 from Github to /root/fog_1.4.4.tar.gz"
+  get_url:
+    url:  https://github.com/FOGProject/fogproject/releases/download/1.4.4/fog_1.4.4.tar.gz
+    dest: /root/fog_1.4.4.tar.gz
+    checksum: md5:138c78ebc0f49c7cb59fdcf792361f0d 
+
+- name: "Extract download to folder"
   unarchive:
-    src: https://github.com/FOGProject/fogproject/releases/download/1.4.4/fog_1.4.4.tar.gz
+    src: /root/fog_1.4.4.tar.gz
     dest: /root/
     remote_src: yes
-
-- name: "Rename FOG_1.4.4 folder to fogproject"
-  shell:
-    mv fog_1.4.4 fogproject
-  # STEP 1, GET FOGPROJECT ONTO REMOTE SYSTEM
-#- name: Extract fogproject.zip into /root/fogproject
-#  unarchive:
-#    src: ../templates/fogproject.zip
-#    dest: /root/
 
 - name: Generate FOG password to use
   shell: openssl rand -base64 32
@@ -52,7 +110,6 @@
     regexp: 'max_input_vars = 1000'
     replace: 'max_input_vars = 250000'
 
-
 # BEGIN configureHttpd
 # Create FOG Web Folder
 - name: Create FOG Web Folder
@@ -76,7 +133,7 @@
   when: fogwebfoldercreated.changed
 
 - name: "Copy files to webdir"
-  shell: "cp -Rf /root/fogproject/{{ webdirsrc }}. {{ webdirdest }}"
+  shell: "cp -Rf {{ fogprojectdir }}/{{ webdirsrc }}. {{ webdirdest }}"
 
 - name: "Configure config.class.php" # I'll be amazed if this works
   template:
@@ -87,35 +144,71 @@
 
 # BEGIN downloadfiles
 
-- name: "Downloading init.xz, kernels, and the fog client"
+- name: "Check if init.xz exists"
+  stat:
+    path: '{{ webdirdest }}service/ipxe/init.xz'
+  register: initXZExists
+
+- name: "Downloading init.xz"
   get_url:
     url: https://fogproject.org/inits/init.xz 
     dest: '{{ webdirdest }}service/ipxe/init.xz'
+  when: initXZExists.stat.exists == False
+
+- name: "Check if init_32.xz exists"
+  stat:
+    path: '{{ webdirdest }}service/ipxe/init_32.xz' 
+  register: init_32XZExists
 
 - name: "Downloading init_32.xz"
   get_url:
     url: https://fogproject.org/inits/init_32.xz
     dest: '{{ webdirdest }}service/ipxe/init_32.xz' 
+  when: init_32XZExists.stat.exists == False
     
+- name: "Check if bzImage exists"
+  stat:
+    path: '{{ webdirdest }}service/ipxe/bzImage'
+  register: bzImageExists
+
 - name: "Downloading bzImage"
   get_url:
     url: https://fogproject.org/kernels/bzImage
     dest: '{{ webdirdest }}service/ipxe/bzImage'
+  when: bzImageExists.stat.exists == False
+
+- name: "Check if bzImage32 exists"
+  stat:
+    path: '{{ webdirdest }}service/ipxe/bzImage32'
+  register: bzImage32Exists
 
 - name: "Downloading bzImage32"
   get_url:
     url: https://fogproject.org/kernels/bzImage32
     dest: '{{ webdirdest }}service/ipxe/bzImage32'
+  when: bzImage32Exists.stat.exists == False
+
+- name: "Check if fogserviceMSI exists"
+  stat:
+    path: '{{ webdirdest }}client/FOGService.msi'
+  register: FOGServiceMSIExists
 
 - name: "Download FOG Service (MSI)"
   get_url:
     url: '{{ clienturl }}'
     dest: '{{ webdirdest }}client/FOGService.msi'
+  when: FOGServiceMSIExists.stat.exists == False
+
+- name: "Check if fogSmartInstaller exists"
+  stat:
+    path: '{{ webdirdest }}client/SmartInstaller.exe'
+  register: fogSmartInstaller
 
 - name: "Download FOG Smart Installer"
   get_url:
     url: '{{ siurl }}'
     dest: '{{ webdirdest }}client/SmartInstaller.exe'
+  when: fogSmartInstaller.stat.exists == False
 
 # END downloadfiles
 
@@ -141,19 +234,18 @@
     group: apache
     mode: 0777 # This seems wrong from the script
 
+- name: "Check if SSL CA Key Already Exists"
+  stat: path='{{ vars["sslpath"] + "CA/.fogCA.key" }}'
+  register: sslCAKeyExists
+
 - name: "Generate SSL CA Key for Snapin Directory (Creating SSL CA)"
   shell:
     openssl genrsa -out '{{ vars["sslpath"] + "CA/.fogCA.key" }}' 4096
+  when: sslCAKeyExists.stat.exists == False
 
-  #openssl_privatekey:
-  #  path: '{{ vars["sslpath"] + "CA/.fogCA.key" }}'
-  #  force: yes
-
-
-
-
-
-
+- name: "Check if SSL PEM Key for Snaping Directory Already Exists"
+  stat: path='{{ vars["sslpath"] + "CA/.fogCA.pem" }}'
+  register: sslPEMKeyExists 
 
 - name: "Generate SSL PEM Key for Snapin Directory"
   shell: |
@@ -166,11 +258,7 @@
     FOG Server CA 
     . 
     EOF
-  #openssl_publickey:
-  #  path: '{{ vars["sslpath"] + "CA/.fogCA.pem" }}'
-  #  privatekey_path: '{{ vars["sslpath"] + "CA/.fogCA.key" }}'
-  #  force: True
-
+  when: sslPEMKeyExists.stat.exists == False
 
 - name: "Creating SSL Private Key Directory (Creating SSL Private Key)"
   file:
@@ -180,13 +268,18 @@
     group: apache
     mode: 0777 # This seems wrong from the script TODO: Check/Fix
 
+- name: "Check if SSL Private Key Already Exists"
+  stat: path='{{sslprivkey}}'
+  register: sslprivkeyExists
+
 - name: "Creating SSL Private Key"
   shell:
     openssl genrsa -out '{{ sslprivkey }}' 4096 
+  when: sslprivkeyExists.stat.exists == False
 
-  #openssl_privatekey:
-  #  path: '{{ sslprivkey }}'
-  #  force: yes
+- name: "Check if SSL FOR CSR File Already Exists"
+  stat: path='{{ vars["sslpath"] + "fog.csr" }}'
+  register: sslFOGCSRExists
 
 - name: "Create SSL FOG CSR file"
   shell: 
@@ -202,16 +295,8 @@
 
 
       EOF
-#  openssl_csr:
-#    path: '{{ vars["sslpath"] + "fog.csr" }}'
-#    privatekey_path: '{{ sslprivkey }}'
-#    country_name: US
-#    organization_name: LTI
-#    common_name: '{{ ipaddress }}'
-#    email_address: tpostma@lssu.edu
-#    force: True
-# Below are shell scripts because I don't want to install an additional program
-    
+  when: sslFOGCSRExists.stat.exists == False
+ 
 - name: "Creating SSL Certificate Directory"
   file:
     path: '{{ webdirdest }}management/other/ssl'
@@ -220,15 +305,14 @@
     group: apache
     mode: 0777 # This seems wrong from the script TODO: Check/Fix
 
+- name: "Check if SSL Certificate for webdirdest/management/other/ssl Already Exists"
+  stat: path='{{ vars["docroot"] + "fog/" + "management/other/ssl/srvpublic.crt" }}'
+  register: sslCertificateWebdirExsits
+
 - name: "Create SSL Certificate for webdirdest/management/other/ssl (Creating SSL Certificate)" # This will probably break
   shell:
     openssl x509 -req -in '{{ vars["sslpath"] + "fog.csr" }}' -CA '{{ vars["sslpath"] + "CA/.fogCA.pem" }}' -CAkey '{{ vars["sslpath"] + "CA/.fogCA.key" }}' -CAcreateserial -out '{{ vars["docroot"] + "fog/" + "management/other/ssl/srvpublic.crt" }}' -days 3650
-  #openssl_certificate:
-  #  path: '{{ vars["webdirdest"] + "management/other/ssl/srvpublic.crt" }}'
-  #  privatekey_path: '{{ vars["sslpath"] + "CA/.fogCA.key" }}'
-  #  csr_path: '{{ vars["sslpath"] + "fog.csr" }}'
-  #  provider: selfsigned
-  #  force: True
+  when: sslCertificateWebdirExsits.stat.exists == False
 
 - name: "Copy management/other/fogCA.pem"
   copy:
@@ -236,18 +320,22 @@
     dest: '{{ webdirdest }}management/other/ca.cert.pem'
     remote_src: yes
 
+- name: "Check if public key Already Exists"
+  stat: path='{{ vars["docroot"] + "fog/" + "management/other/ca.cert.der" }}'
+  register: publickeyExists
+
 - name: "Generate public keys and auths"
   shell: 
     openssl x509 -outform der -in '{{ vars["docroot"] + "fog/" + "management/other/ca.cert.pem" }}' -out '{{ vars["docroot"] + "fog/" + "management/other/ca.cert.der" }}' 2>&1
-    
+  when: publickeyExists.stat.exists == False
+
 - name: "Fix permissions in webdir"
   shell:
     chown -R '{{ apacheuser }}':'{{ apacheuser }}' '{{ vars["docroot"] + "fog/" + "management/other" }}'
    
 # END createSSLCA
 
-
-- name: "Copy FOG Host file to etcdest" # I'll be amazed if this works
+- name: "Copy FOG Host file to etcdest"
   template:
     src: httpd/fog.conf.j2
     dest: '{{ etcconf }}'
@@ -259,8 +347,7 @@
   shell: 
     chmod +rx '{{ apachelogdir }}' '{{ apacheerrlog }}' '{{ apacheacclog }}'
 
-
-# Create Symlink in webdir (WHY????)
+# Create Symlink in webdir (WHY???? I have to do this otherwise the web interface breaks)
 - name: "Create Symlink to iteself (for some reason)"
   file:
     src: /var/www/html/fog
@@ -269,7 +356,6 @@
     group: apache
     state: link
     force: yes
-
 
 - name: "Fix apache permissions"
   shell: chown -R '{{ apacheuser }}':'{{ apacheuser }}' '{{ webdirdest }}'
@@ -385,7 +471,7 @@
 
 - name: "Create directories from a different directory (and fix permissions)"
   shell: |
-    cp -rp /root/fogproject/packages/tftp/. /tftpboot/.
+    cp -rp '{{ fogprojectdir }}'/packages/tftp/. /tftpboot/.
 
     chown -R '{{ username }}' '{{ tftpdirdst }}' 
     chown -R '{{ username }}' '{{ webdirdest }}'service/ipxe 
@@ -402,7 +488,6 @@
     dest: '{{ tftpdirdst }}/default.ipxe'
   with_items: 
     - { ipaddress: '{{ ipaddress }}' }   
-
 
 - name: "Create backup for tftpconfig"
   shell: |
@@ -449,26 +534,19 @@
 # END configureSnapins
 
 # BEGIN configureUDPCast
-- name: "Setting up UDPCast" # TODO: I WILL NEED TO FIX THE PATHS ON THIS
-  shell: |
-    udpcastsrc="'{{ fogprojectdir }}'/packages/udpcast-20120424.tar.gz"
-    udpcasttmp="/tmp/udpcast.tar.gz"
 
-    cp -Rf "$udpcastsrc" "$udpcasttmp"
-    cur=$(pwd)
-    cd /tmp
-    tar xvzf "$udpcasttmp" 
-    cd $udpcastout
-  
-    dots "Configuring UDPCast"
+- name: Extract UDPCast folder to /tmp
+  unarchive:
+    src: '{{ udpcastsrc }}'
+    dest: /tmp/
+    remote_src: yes
+
+- name: "Setting up UDPCast"
+  shell: |
+    cd '{{ udpcasttmp }}'
     ./configure 
-  
-    dots "Building UDPCast"
     make 
-  
     make install 
-  
-    cd $cur
 
 # END configureUDPCast
 
@@ -522,7 +600,7 @@
 
 - name: "Copy FOG Services from packages to system location"
   shell: 
-    cp -Rf /root/fogproject/packages/service/. '{{ servicedst + "/" }}'
+    cp -Rf '{{ fogprojectdir }}'/packages/service/. '{{ servicedst + "/" }}'
 
 - name: "Fix FOG Service Permissions"
   shell:
@@ -594,8 +672,6 @@
   with_items: 
     - { servicename: 'nfs-server'}
     - { servicename: 'nfs'}
-   # - { servicename: 'nfs-kernel-server'}
-   
            
 # END configureNFS
 
@@ -640,7 +716,6 @@
 
 # END linkOptFogDir
 
-
 # BEGIN updateStorageNodeCredentials
 
 - name: "Ensuring node username and passwords match"
@@ -665,5 +740,3 @@
       - '- Password: password'      
 
 # END Print Final Message
-
-# TIME FOR DEBUGGING!
