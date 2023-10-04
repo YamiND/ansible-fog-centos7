@@ -1,9 +1,0 @@
-- name: Install necessary MariaDB packages
-  yum: 
-    name:
-      - mariadb-server
-      - mariadb
-      - MySQL-python
-
-- name: Start the MariaDB service
-  service: name=mariadb state=started enabled=true

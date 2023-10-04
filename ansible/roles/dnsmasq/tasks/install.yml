@@ -1,7 +1,0 @@
-##################################################
-### Install dnsmasq
-
-- name: Install dnsmasq
-  yum: 
-    name:
-      - dnsmasq

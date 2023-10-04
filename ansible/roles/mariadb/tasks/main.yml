@@ -1,8 +1,0 @@
-- set_fact: role_name=mariadb
-  become: yes
-  become_user: root
-##################################################
-### Install MariaDB
-- import_tasks: install.yml
-- import_tasks: configure.yml
-- import_tasks: secure.yml

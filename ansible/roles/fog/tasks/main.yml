@@ -1,8 +1,0 @@
-- set_fact: role_name=fog
-  become: yes
-  become_user: root
-##################################################
-### Install and configure FOG
-
-- import_tasks: install.yml
-- import_tasks: configure.yml
